@@ -1,33 +1,29 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 import { addBookByName } from '../api/book.api.js';
+import { LoginPage } from '../pages/LoginPage.js';
+import { ProfilePage } from '../pages/ProfilePage.js';
+import { globalData, profileData } from '../data/testData.js';
 
 test.describe('Delete book', () => {
     test('Verify user can delete added book in his profile', async ({ page }) => {
-        const BASE_URL = 'https://demoqa.com';
-        const USERNAME = 'phuongtest3';
-        const PASSWORD = 'Test@123';
-        const BOOK_NAME = 'Learning JavaScript Design Patterns';
+        const USERNAME = globalData.username;
+        const PASSWORD = globalData.password;
+        const BOOK_NAME = profileData.bookName;
+        // Step 1 - Open DemoQA and Login
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+        await loginPage.login(USERNAME, PASSWORD);
 
-        // Step 1 - Open DemoQA Login page
-        await page.goto(`${BASE_URL}/login`, {
-            waitUntil: 'domcontentloaded',
-        });
-        // Step 2 - Login to DemoQA
-        await page.fill('#userName', USERNAME);
-        await page.fill('#password', PASSWORD);
-        await page.click('#login');
+        // Step 2 - Ensure on Profile page
+        const profile = new ProfilePage(page);
+        await profile.ensureOnProfile();
 
-        // Step 3 - Go to Profile page
-        await expect(page).toHaveURL(/profile/);
-        const searchBook = page.locator('#searchBox');
-        await expect(searchBook).toBeVisible();
+        // Step 3 - Search book
+        await profile.searchBook(BOOK_NAME);
 
-        // Step 4 - Search book
-        await searchBook.fill(BOOK_NAME);
-        // 4.1 - Check book is existed
-        const bookRow = page.locator('.rt-td', { hasText: BOOK_NAME });
-        if (await bookRow.count() === 0) {
+        // Check book is existed. If not, adding this book to Profile using API
+        if (!(await profile.isBookPresent(BOOK_NAME))) {
             console.log(`❌ Book ${BOOK_NAME} is not existed. Adding this book to Profile using API.`);
             // Add book by API
             const isAdded = await addBookByName(USERNAME, PASSWORD, BOOK_NAME);
@@ -38,49 +34,25 @@ test.describe('Delete book', () => {
             // Reload Profile page
             await page.reload();
             // Re-search book and recheck existence
-            await searchBook.fill(BOOK_NAME);
-            if (await bookRow.count() === 0) {
+            await profile.searchBook(BOOK_NAME);
+            if (!(await profile.isBookPresent(BOOK_NAME))) {
                 console.log(`❌ Book "${BOOK_NAME}" still cannot be found after adding. Stop test.`);
                 return;
             }
             console.log(`✅ Book ${BOOK_NAME} is added successfully. Continue testing`);
         } else {
-            console.log(`✅ Book "${BOOK_NAME}" is existed in Profile. Countue testing`);
+            console.log(`✅ Book "${BOOK_NAME}" is existed in Profile. Continue testing`);
         }
 
-        // Step 5 - Delete searched book
-        const deleteButton = page.locator(`.rt-tr-group:has(.rt-td:has-text("${BOOK_NAME}")) span[title="Delete"]`);
-        await deleteButton.click();
+        // Step 4 - Delete searched book
+        await profile.deleteBook(BOOK_NAME);
+        await profile.confirmDeleteIfVisible(3000);
+        const deletedShown = await profile.waitForDeletedDialog(3000);
+        if (!deletedShown) console.log('⚠️ Book Deleted dialog not detected');
 
-        // 5.1 - Check Delete Confirmation dialog appears
-        const confirmDialog = page.locator(
-            '.modal-content:has-text("Do you want to delete this book?")'
-        );
-        if (await confirmDialog.isVisible({ timeout: 3000 })) {
-            console.log('✅ Delete confirmation dialog is displayed');
-            await page.locator('#closeSmallModal-ok').click();
-        } else {
-            console.log('❌ Delete confirmation dialog did not appear');
-        }
-
-        // 5.2 - Check Book Deleted dialog appears
-        const deletedDialog = page.locator(
-            '.modal-content:has-text("Book deleted")'
-        );
-
-        try {
-            await expect(deletedDialog).toBeVisible({ timeout: 2000 });
-            console.log('✅ Book Deleted dialog is displayed');
-            await page.locator('#closeSmallModal-ok').click();
-        } catch {
-            console.log('⚠️ Book Deleted dialog not detected (ignored)');
-        }
-
-        // Step 6 - Verify book is deleted
-        await searchBook.fill(BOOK_NAME);
-        await expect(
-            page.locator('.rt-td', { hasText: BOOK_NAME })
-        ).toHaveCount(0);
+        // Step 5 - Verify book is deleted
+        await profile.searchBook(BOOK_NAME);
+        await expect(profile.page.locator('.rt-td', { hasText: BOOK_NAME })).toHaveCount(0);
         console.log(`✅ Book "${BOOK_NAME}" is deleted successfully`);
     });
 });

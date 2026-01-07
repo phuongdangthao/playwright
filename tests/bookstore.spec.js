@@ -1,48 +1,29 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { BookStorePage } from '../pages/BookStorePage.js';
+import { bookstoreData } from '../data/testData.js';
 
 test.describe('Search book', () => {
   test('Verify display all books matching keyword "Design" or "design"', async ({ page }) => {
-    // Step 1: Open Book Store page
-    await page.goto('https://demoqa.com/books', {
-      waitUntil: 'domcontentloaded',
-    });
+    const bookstore = new BookStorePage(page);
+    // Step 1 - Open Book Store page
+    await bookstore.goto();
+    await expect(bookstore.page).toHaveURL(bookstoreData.bookstoreURL);
 
-    // Step 2: Search books by keyword
-    const searchBox = page.locator('#searchBox');
-    await expect(searchBox).toBeVisible();
-    const searchKeywords = ['Design', 'design'];
-
-    for (const keyword of searchKeywords) {
-      // 2.1 - Search by keyword
-      await searchBox.fill(keyword);
+    // Step 2 - Search books, get book titles and verify book titles
+    for (const keyword of bookstoreData.searchKeywords) {
+      // Step 2.1 - Search books by keywords
+      await bookstore.search(keyword);
       console.log(`Searching books with keyword: "${keyword}"`);
 
-      // 2.2 -  Collect book titles
-      const bookTitleCells = page.locator('.rt-td:nth-child(2)');
-      await expect(bookTitleCells.first()).toBeVisible();
-
-      const totalTitles = await bookTitleCells.count();
-      const bookTitles = [];
-
-      for (let i = 0; i < totalTitles; i++) {
-        const title = (await bookTitleCells.nth(i).innerText()).trim();
-        if (title !== '') {
-          bookTitles.push(title);
-        }
-      }
-
+      // Step 2.2 - Get book titles
+      const bookTitles = await bookstore.getBookTitles();
       console.log('Book titles:', bookTitles);
 
-      // Step 3: Check expected books are present
-      const expectedBooks = [
-        'Learning JavaScript Design Patterns',
-        'Designing Evolvable Web APIs with ASP.NET'
-      ];
-
-      for (const expectedTitle of expectedBooks) {
+      // Step 2.3 - Verify book titles
+      for (const expectedTitle of bookstoreData.expectedBooks) {
         expect(bookTitles).toContain(expectedTitle);
       }
     }
-  })
+  });
 });
