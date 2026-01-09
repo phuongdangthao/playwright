@@ -3,12 +3,12 @@ import { globalData } from '../data/testData.js';
 
 async function addBookByName(bookName) {
   // Create API request context
-  const api = await request.newContext({ baseURL: globalData.BASE_URL });
+  const api = await request.newContext({ baseURL: globalData.baseUrl });
 
   try {
     // Login to get token and userId
     const loginRes = await api.post('/Account/v1/Login', {
-      data: { userName: globalData.USERNAME, password: globalData.PASSWORD }
+      data: { userName: globalData.username, password: globalData.password }
     });
 
     if (!loginRes.ok()) {
