@@ -1,15 +1,14 @@
 import { request } from '@playwright/test';
+import { globalData } from '../data/testData.js';
 
-const BASE_URL = 'https://demoqa.com';
-
-async function addBookByName(username, password, bookName) {
+async function addBookByName(bookName) {
   // Create API request context
-  const api = await request.newContext({ baseURL: BASE_URL });
+  const api = await request.newContext({ baseURL: globalData.BASE_URL });
 
   try {
     // Login to get token and userId
     const loginRes = await api.post('/Account/v1/Login', {
-      data: { userName: username, password }
+      data: { userName: globalData.USERNAME, password: globalData.PASSWORD }
     });
 
     if (!loginRes.ok()) {

@@ -26,7 +26,7 @@ test.describe('Delete book', () => {
         if (!(await profile.isBookPresent(BOOK_NAME))) {
             console.log(`❌ Book ${BOOK_NAME} is not existed. Adding this book to Profile using API.`);
             // Add book by API
-            const isAdded = await addBookByName(USERNAME, PASSWORD, BOOK_NAME);
+            const isAdded = await addBookByName(BOOK_NAME);
             if (!isAdded) {
                 console.log(`❌ Cannot add book "${BOOK_NAME}". Stop test.`);
                 return;
