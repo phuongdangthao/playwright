@@ -1,4 +1,4 @@
 export const bookstoreLocators = {
     searchBox: '#searchBox',
-    bookTitleCells: '.rt-td:nth-child(2)',
+    bookTitleCells: 'td:nth-child(2)',
 };
