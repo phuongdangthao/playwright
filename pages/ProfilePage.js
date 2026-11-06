@@ -8,6 +8,11 @@ export class ProfilePage extends BasePage {
     await expect(this.page).toHaveURL(profileData.profileURL);
   }
 
+  async reload() {
+    await this.page.reload();
+    await this.ensureOnProfile();
+  }
+
   async searchBook(name) {
     const searchBook = this.page.locator(profileLocators.searchBox);
     await expect(searchBook).toBeVisible();
@@ -20,17 +25,26 @@ export class ProfilePage extends BasePage {
     return count > 0;
   }
 
+  async waitForBookPresent(name, timeout = 10000) {
+    const bookCell = this.page.locator(profileLocators.bookCell, { hasText: name });
+    await expect(bookCell).toBeVisible({ timeout });
+  }
+
+  async waitForBookAbsent(name, timeout = 10000) {
+    const bookCell = this.page.locator(profileLocators.bookCell, { hasText: name });
+    await expect(bookCell).toHaveCount(0, { timeout });
+  }
+
   async deleteBook(name) {
     const deleteButton = this.page.locator(profileLocators.deleteButton(name));
     await deleteButton.click();
   }
 
-  async confirmDeleteIfVisible(timeout) {
+  async confirmDelete(timeout = 5000) {
     const confirmDialog = this.page.locator(profileLocators.confirmDialog);
     const confirmOkButton = this.page.locator(profileLocators.confirmOkButton);
-    if (await confirmDialog.isVisible({ timeout })) {
-      await confirmOkButton.click();
-    }
+    await expect(confirmDialog).toBeVisible({ timeout });
+    await confirmOkButton.click();
   }
 
   async waitForDeletedDialog(timeout) {

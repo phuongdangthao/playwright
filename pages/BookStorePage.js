@@ -8,6 +8,10 @@ export class BookStorePage extends BasePage {
     await super.goto(bookstoreData.bookstoreURL);
   }
 
+  async ensureOnBookstore() {
+      await expect(this.page).toHaveURL(bookstoreData.bookstoreURL);
+    }
+
   async search(keyword) {
     const searchBook = this.page.locator(bookstoreLocators.searchBox);
     await expect(searchBook).toBeVisible();

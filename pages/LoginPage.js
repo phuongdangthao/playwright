@@ -13,3 +13,4 @@ export class LoginPage extends BasePage {
     await this.page.locator(loginLocators.loginButton).click();
   }
 }
+
